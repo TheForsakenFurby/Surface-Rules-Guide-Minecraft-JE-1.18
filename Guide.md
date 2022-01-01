@@ -31,7 +31,7 @@ Yep, that’s it. Everything else goes in that `…` You can place any surface r
 
 ### **Also, before we get started, this guide is meant to be read in order. If you need brushing up on something (as I did many times while writing), of course feel free to skip to whatever section you need, but I would recommend reading this document top to bottom (perhaps in multiple sittings…) if you're new to surface rules. That said, examples are presented in case you'd like them; you do not have to read all the examples here to understand surface rules.**
 
-*(Click on the arrow within each section to see details, formatting, and examples with explanations..)*
+*(Click on the arrow within each section to see details, formatting, and examples with explanations.)*
 
 ***
 
