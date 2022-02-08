@@ -25,11 +25,11 @@ Each noise_settings file actually only comes with one surface rule, but there’
 ```
 Yep, that’s it. Everything else goes in that `…` You can place any surface rule here, whether that’s a block, a condition, or a sequence. I’ll explain all of these next, but you probably want your root surface rule to be a `sequence`.
 
-**However, make sure that all instances of `"` ARE actually `"`. Some text editors will autocorrect them to something like `“` or `”`, which will NOT work!**
+**Do make sure that all instances of `"` ARE actually `"`. Some text editors will autocorrect them to something like `“` or `”`, which will NOT work!**
 
 (Whenever there's multiple fields within a set of braces, they can be listed in any order. For most of this document, I order them in the way that makes sense to me.)
 
-### **Also, before we get started, this guide is meant to be read in order. If you need brushing up on something (as I did many times while writing), of course feel free to skip to whatever section you need, but I would recommend reading this document top to bottom (perhaps in multiple sittings…) if you're new to surface rules. That said, examples are presented in case you'd like them; you do not have to read all the examples here to understand surface rules.**
+### **Also, before we get started, this guide is meant to be read in order. If you need brushing up on something (as I did many times while writing), of course feel free to skip to whatever section you need, but I would recommend reading this document top to bottom (perhaps across multiple sittings…) if you're new to surface rules. That said, examples are presented in case you'd like them; you do not have to read all the examples here to understand surface rules.**
 
 *(Click on the arrow within each section to see details, formatting, and examples with explanations.)*
 
@@ -1390,6 +1390,10 @@ Normally, `stone_depth` only replaces the uppermost or lowermost block within th
 `offset` works like a customizable surface depth modifier, adding the specified integer value to the depth, but without any of the variation. If you set this to `0`, nothing changes, but if you set it to `19`, the depth increases to a constant 20 blocks when `add_surface_depth` and `add_surface_secondary_depth` are set to false, or a variation from 20-28 blocks when both are set to `true`. As with those, the value for `offset` can be set independently of everything else. `offset` can also be negative, which will decrease the depth by a constant value (useful if you want the variation from `add_surface_depth` but not quite as deep). If the total depth in a column goes to zero or is negative, no blocks are placed. *(Remember that this condition by default starts with a depth of 1, so when both `add_surface_depth` and `add_surface_secondary_depth` are set to false, an `offset` of `0` is fine, but an `offset` of `-1` is not.)*
 
 Positive `offset` values will still increase the number of blocks in when `surface_type` is set to `ceiling` (and negative values will still decrease the number of blocks).
+	
+  <h3>UPCOMING: 22w03a and beyond</h3>
+
+As of the most recent snapshots, the `add_surface_secondary_depth` field has been replaced with the `secondary_depth_range`, which takes an integer. Instead of adding another 0-4 blocks with its unique noise, it now takes that unique noise and maps it between 0 and the field's integer value. That means you should get the same (or at least roughly the same) generation from before by setting `secondary_depth_range` to `4`. Setting this to higher numbers will lead to more variation and on average more layers, with lower numbers leading to less variation and on average less layers. Setting this to `0` should prevent secondary depth from happening entirely, as if `add_surface_secondary_depth` was `false`.
 
   <h3>Examples:</h3>
 
@@ -2100,6 +2104,8 @@ This condition places blocks if the block at this position falls within a range 
 ```
 where `<noise>` is the namespaced ID of a noise file (not a noise settings file!),
 and `<decimal value>` is a positive or negative number (or zero) with a decimal point.
+
+(The thresholds are inclusive, so if you set them equal to 0.0 and 0.5, for example, your surface rule will take effect at both 0.0 and 0.5.
 
   <h3>Examples:</h3>
 
