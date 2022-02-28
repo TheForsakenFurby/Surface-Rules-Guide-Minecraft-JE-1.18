@@ -377,7 +377,7 @@ You can have any number of surface rules within a sequence, but remember to incl
 	]
 }
 ```
-> ^ This sequence places dripstone blocks in the dripstone caves biome, moss blocks in the lush caves biome, diorite above y=40 in all other biomes, and andesite at and below y=50 in all other biomes. Note that the dripstone blocks and moss blocks are *not* limited by height, because the `y_above` condition only applies to the surface rule placing diorite.
+> ^ This sequence places dripstone blocks in the dripstone caves biome, moss blocks in the lush caves biome, diorite above y=50 in all other biomes, and andesite at and below y=50 in all other biomes. Note that the dripstone blocks and moss blocks are *not* limited by height, because the `y_above` condition only applies to the surface rule placing diorite.
     
   </details>
   
@@ -1233,7 +1233,7 @@ Note that the vertical anchor for `true_at_and_below` must be lower in the world
 	}
 }
 ```
-> ^ This is the surface rule used to create the bedrock floor in the Overworld and the Nether. We want bedrock always to exist at the bottom of the world, and no bedrock to exist more than 5 blocks above the world, so that's what we set our values to. In the space in between, there will be more bedrock lower down and less bedrock higher up. Vanilla uses the random name `"minecraft:bedrock_floor"`, but this could be pretty much anything and it will just change which blocks within the gradient are chosen to be bedrock.
+> ^ This is the surface rule used to create the bedrock floor in the Overworld and the Nether. We want bedrock to always exist at the bottom of the world, and no bedrock to exist more than 5 blocks above the world, so that's what we set our values to. In the space in between, there will be more bedrock lower down and less bedrock higher up. Vanilla uses the random name `"minecraft:bedrock_floor"`, but this could be pretty much anything and it will just change which blocks within the gradient are chosen to be bedrock.
 
 > (There is be an example of the Nether's bedrock ceiling in the `not` section.)
 
@@ -1375,25 +1375,22 @@ This condition ignore water and lava, so it will place blocks at the on the ocea
 	"type": "minecraft:stone_depth",
 	"surface_type": <"floor" or "ceiling">,
 	"add_surface_depth": <true or false>,
-	"add_surface_secondary_depth": <true or false>,
+	"secondary_depth_range": <non-negative integer>,
 	"offset": <integer value>
 }
 ```
 where `<"floor" or "ceiling">` is either `"floor"` or `"ceiling"`,
 `<true or false>` is either `true` or `false`,
+`<non-negative integer>` is a positive integer or zero,
 and `<integer value>` is an integer.
 
 `surface_type` specifies whether you want to replace to blocks in a floor (including the world's surface) or a ceiling (including the bottom of the world, where the bedrock floor normally is!).
 
-Normally, `stone_depth` only replaces the uppermost or lowermost block within the column, the one directly above or below air. Setting `add_surface_depth` to `true` will increase this depth by 0-4 (varies by column, but is usually 2-3), so it will replace the uppermost/lowermost 1-5 blocks. Setting `add_surface_secondary_depth` to `true` will increase the depth by an additional 0-4, up to theoretically 9 blocks deep (though I have yet to see this; 7 is by far the most common depth with both set to true). Either of these can be set to `true` or `false` independent of each other. `add_surface_depth` and `add_surface_secondary_depth` are roughly similar but not exactly the same, so you'll get slightly different results if you only set one to `true` and the other to `false` depending on which you set to which.
+Normally, `stone_depth` only replaces the uppermost or lowermost block within the column, the one directly above or below air. Setting `add_surface_depth` to `true` will increase this depth by 0-4 (varies by column, but is usually 2-3), so it will replace the uppermost/lowermost 1-5 blocks.
 
-`offset` works like a customizable surface depth modifier, adding the specified integer value to the depth, but without any of the variation. If you set this to `0`, nothing changes, but if you set it to `19`, the depth increases to a constant 20 blocks when `add_surface_depth` and `add_surface_secondary_depth` are set to false, or a variation from 20-28 blocks when both are set to `true`. As with those, the value for `offset` can be set independently of everything else. `offset` can also be negative, which will decrease the depth by a constant value (useful if you want the variation from `add_surface_depth` but not quite as deep). If the total depth in a column goes to zero or is negative, no blocks are placed. *(Remember that this condition by default starts with a depth of 1, so when both `add_surface_depth` and `add_surface_secondary_depth` are set to false, an `offset` of `0` is fine, but an `offset` of `-1` is not.)*
+`secondary_depth_range` is similar to `add_surface_depth`, but it uses a different noise that behaves identically (so it would add 0-4 blocks, just different values in different places), and with `secondary_depth_range`, you can choose to scale the noise up to a particular value. Specifically, the game will take the noise, and scale it to match the range from 0 to whichever integer you specify. If you want no secondary depth, you can set this value to `0`. If you want it to behave exactly like in previous versions, set this value to `6`. Vanilla only has `secondary_depth_range` set to a value other than `0` in two places: Sandstone underneath sand in the warm ocean, beach, and snowy beach biomes has a `secondary_depth_range` of `6`, and sandstone underneath sand in the desert biome has a `secondary_depth_range` of `30`. Despite its name, `secondary_depth_range` is independent of `add_surface_depth`, so you can set the `add_surface_depth` to `false` and still set a `secondary_depth_range`. `add_surface_depth` and `secondary_depth_range` are additive, so using both will cause the depth to be deeper than either alone.
 
-Positive `offset` values will still increase the number of blocks in when `surface_type` is set to `ceiling` (and negative values will still decrease the number of blocks).
-	
-  <h3>UPCOMING: 22w03a and beyond</h3>
-
-As of the most recent snapshots, the `add_surface_secondary_depth` field has been replaced with the `secondary_depth_range`, which takes an integer. Instead of adding another 0-4 blocks with its unique noise, it now takes that unique noise and maps it between 0 and the field's integer value. That means you should get the same (or at least roughly the same) generation from before by setting `secondary_depth_range` to `4`. Setting this to higher numbers will lead to more variation and on average more layers, with lower numbers leading to less variation and on average less layers. Setting this to `0` should prevent secondary depth from happening entirely, as if `add_surface_secondary_depth` was `false`.
+`offset` adds or subtracts the specified integer value to or from the depth with no variation. So, for example, if you want your dirt to range from 3-7 blocks deep instead of 1-5, you could set this value to `2`. `offset` can also be negative, which will decrease the depth by a constant value. If the total depth in a column goes to zero or is negative, no blocks are placed. *(Remember that this condition by default starts with a depth of 1, so when both `add_surface_depth` and `add_surface_secondary_depth` are set to false— and there are no other blocks like grass to take into account— an `offset` of `0` keeps the usual distribution, but an `offset` of `-1` or more will create a greater proportion of columns with no blocks.)* `offset` is independent of and additive with `add_surface_depth` and `secondary_depth_range`. Positive `offset` values will still increase the number of blocks in when `surface_type` is set to `ceiling` (and negative values will still decrease the number of blocks).
 
   <h3>Examples:</h3>
 
@@ -1410,7 +1407,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 				"type": "minecraft:stone_depth",
 				"surface_type": "floor",
 				"add_surface_depth": false,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"offset": 0
 			},
 			"then_run": {
@@ -1449,7 +1446,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 				"type": "minecraft:stone_depth",
 				"surface_type": "floor",
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"offset": 0
 			},
 			"then_run": {
@@ -1479,7 +1476,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 				"type": "minecraft:stone_depth",
 				"surface_type": "floor",
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"offset": 0
 			},
 			"then_run": {
@@ -1495,7 +1492,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 				"type": "minecraft:stone_depth",
 				"surface_type": "floor",
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": true,
+				"secondary_depth_range": 6,
 				"offset": 0
 			},
 			"then_run": {
@@ -1533,7 +1530,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 					"type": "minecraft:stone_depth",
 					"surface_type": "ceiling",
 					"add_surface_depth": false,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"offset": 0
 				},
 				"then_run": {
@@ -1548,9 +1545,9 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 				"if_true": {
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
-					"add_surface_depth": true,
-					"add_surface_secondary_depth": false,
-					"offset": -1
+					"add_surface_depth": false,
+					"secondary_depth_range": 3,
+					"offset": 0
 				},
 				"then_run": {
 					"type": "minecraft:block",
@@ -1563,7 +1560,62 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
 	}
 }
 ```
-> ^ Here, we place moss blocks on the ceilings and floors of lush caves. I want the moss in the floor to be a couple of blocks deep, but I still want a little variation, so I set `add_surface_depth` to `true` and `offset` to `-1`.
+> ^ Here, we place moss blocks on the ceilings and floors of lush caves. I want the moss in the floor to be only a couple of blocks deep, but I still want a little variation, so I use `secondary_depth_range` with a low value instead of `add_surface_depth.
+
+  </details>
+
+  <details>
+    <summary>Example 4</summary>
+
+```json
+{
+	"type": "minecraft:condition",
+	"if_true": {
+		"type": "minecraft:biome",
+		"biome_is": [
+			"minecraft:basalt_deltas"
+		]
+	},
+	"then_run": {
+		"type": "minecraft:sequence",
+		"sequence": [
+			{
+				"type": "minecraft:condition",
+				"if_true": {
+					"type": "minecraft:stone_depth",
+					"surface_type": "floor",
+					"add_surface_depth": true,
+					"secondary_depth_range": 10,
+					"offset": 5
+				},
+				"then_run": {
+					"type": "minecraft:block",
+					"result_state": {
+						"Name": "minecraft:blackstone"
+					}
+				}
+			},
+			{
+				"type": "minecraft:condition",
+				"if_true": {
+					"type": "minecraft:stone_depth",
+					"surface_type": "ceiling",
+					"add_surface_depth": true,
+					"secondary_depth_range": 10,
+					"offset": 5
+				},
+				"then_run": {
+					"type": "minecraft:block",
+					"result_state": {
+						"Name": "minecraft:blackstone"
+					}
+				}
+			},
+		]
+	}
+}
+```
+> ^ Here, I want there to be blackstone in the floor and the ceiling, with a lot of depth variation, but always having at least several blocks. To ensure that I always have at least 6 blocks of blackstone, I set the `offset` to `5` (remember that this condition starts with a depth of 1). I also used both `add_surface_depth` and a high `secondary_depth_range`, so that the variation would be more noticeable on such a large scale.
 
   </details>
 
@@ -1585,7 +1637,7 @@ As of the most recent snapshots, the `add_surface_secondary_depth` field has bee
   <summary>Limits surface rules to columns with 0 surface noise.</summary>
   <br>
 
-This condition affects columns where the surface noise (the one used for `add_surface_depth` in the `stone_depth` condition) is equal to 0; i.e. where there would be no dirt underneath grass in vanilla. Keep in mind that *this affects all y-levels*, so you'll usually want to limit this with other conditions.
+This condition affects columns where the surface noise (the one used for `add_surface_depth` in the `stone_depth` condition) is equal to 0; i.e. where there would be no dirt underneath grass in vanilla. Keep in mind that *this affects all y-levels*, so you'll usually want to limit this with other conditions. (Also keep in mind this this condition has no relation to the noise used for `secondary_depth_range` in the `stone_depth` condition, so you could still get blocks from that if you set it to a positive value.)
 
   <h3>Formatting:</h3>
 
@@ -1647,7 +1699,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 						"type": "minecraft:stone_depth",
 						"surface_type": "floor",
 						"add_surface_depth": false,
-						"add_surface_secondary_depth": false,
+						"secondary_depth_range": 0,
 						"offset": 0
 					},
 					"then_run": {
@@ -1672,7 +1724,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 						"type": "minecraft:stone_depth",
 						"surface_type": "floor",
 						"add_surface_depth": false,
-						"add_surface_secondary_depth": false,
+						"secondary_depth_range": 0,
 						"offset": 0
 					},
 					"then_run": {
@@ -1692,7 +1744,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
 					"add_surface_depth": true,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"offset": 0
 				},
 				"then_run": {
@@ -1723,7 +1775,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 				"type": "minecraft:stone_depth",
 				"surface_type": "ceiling",
 				"add_surface_depth": false,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"offset": 0
 			},
 			"then_run": {
@@ -1744,8 +1796,33 @@ This condition affects columns where the surface noise (the one used for `add_su
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
 					"add_surface_depth": false,
-					"add_surface_secondary_depth": true,
+					"secondary_depth_range": 6,
 					"offset": -2
+				},
+				"then_run": {
+					"type": "minecraft:block",
+					"result_state": {
+						"Name": "minecraft:lava",
+						"Properties": {
+							"level": "0"
+						}
+					}
+				}
+			}
+		},
+	  	{
+			"type": "minecraft:condition",
+			"if_true": {
+				"type": "minecraft:hole"
+			},
+			"then_run": {
+				"type": "minecraft:condition",
+				"if_true": {
+					"type": "minecraft:stone_depth",
+					"surface_type": "floor",
+					"add_surface_depth": false,
+					"secondary_depth_range": 0,
+					"offset": 0
 				},
 				"then_run": {
 					"type": "minecraft:block",
@@ -1767,7 +1844,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 	]
 }
 ```
-> ^ With this surface rule I have in mind lava pools for a Nether-like landscape. I don't want the lava to flow down in giant lavafalls in the middle of solid terrain though, so I start by placing netherrack one block thick on every ceiling. Next I have the lava pools, which I would like to be shallow but not uniformly 1 block deep. I can't use `add_surface_depth` because the `hole` condition by definition only places where that field will have no effect, but we *can* use `add_surface_secondary_depth`, because that has a different map. As I said though, I still want it to be shallow, so I set `offset` to -2. Finally, I make every other block netherrack.
+> ^ With this surface rule I have in mind lava pools for a Nether-like landscape. I don't want the lava to flow down in giant lavafalls in the middle of solid terrain though, so I start by placing netherrack one block thick on every ceiling. Next I have the lava pools, which I would like to be shallow but not uniformly 1 block deep. I can't use `add_surface_depth` because the `hole` condition by definition only places where that field will have no effect, but we *can* use `secondary_depth_range`, because that has a different noise map and has no relation to the `hole` condition. As I said though, I still want it to be shallow, so I set `offset` to -2. That would leave us with exposed netherrack in some places though, so I run another surface rule placing 1 block of lava everywhere there is a hole, to be safe. Finally, I make every other block netherrack.
 
   </details>
 
@@ -1784,7 +1861,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 				"type": "minecraft:stone_depth",
 				"surface_type": "ceiling",
 				"add_surface_depth": false,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"offset": 0
 			},
 			"then_run": {
@@ -1818,7 +1895,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 								"type": "minecraft:stone_depth",
 								"surface_type": "floor",
 								"add_surface_depth": false,
-								"add_surface_secondary_depth": true,
+								"secondary_depth_range": 4,
 								"offset": 5
 							},
 							"then_run": {
@@ -1834,7 +1911,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 								"type": "minecraft:stone_depth",
 								"surface_type": "floor",
 								"add_surface_depth": false,
-								"add_surface_secondary_depth": true,
+								"secondary_depth_range": 4,
 								"offset": 6
 							},
 							"then_run": {
@@ -1855,7 +1932,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 								"type": "minecraft:stone_depth",
 								"surface_type": "floor",
 								"add_surface_depth": false,
-								"add_surface_secondary_depth": true,
+								"secondary_depth_range": 4,
 								"offset": 7
 							},
 							"then_run": {
@@ -1876,7 +1953,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 								"type": "minecraft:stone_depth",
 								"surface_type": "floor",
 								"add_surface_depth": false,
-								"add_surface_secondary_depth": true,
+								"secondary_depth_range": 4,
 								"offset": 8
 							},
 							"then_run": {
@@ -1897,7 +1974,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 								"type": "minecraft:stone_depth",
 								"surface_type": "floor",
 								"add_surface_depth": false,
-								"add_surface_secondary_depth": true,
+								"secondary_depth_range": 4,
 								"offset": 9
 							},
 							"then_run": {
@@ -1993,7 +2070,7 @@ This condition allows blocks to be replaced near-ish to the surface. It's useful
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
 					"add_surface_depth": false,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"offset": 0
 				},
 				"then_run": {
@@ -2032,7 +2109,7 @@ This condition allows blocks to be replaced near-ish to the surface. It's useful
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
 					"add_surface_depth": true,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"offset": 0
 				},
 				"then_run": {
@@ -2124,7 +2201,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": false,
-			"add_surface_secondary_depth": false,
+			"secondary_depth_range": 0,
 			"offset": 0
 		},
 		"then_run": {
@@ -2182,7 +2259,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": false,
-			"add_surface_secondary_depth": false,
+			"secondary_depth_range": 0,
 			"offset": 0
 		},
 		"then_run": {
@@ -2284,7 +2361,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 				"type": "minecraft:stone_depth",
 				"surface_type": "floor"
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": true,
+				"secondary_depth_range": 6,
 				"offset": 0
 			},
 			"then_run": {
@@ -2300,7 +2377,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 				"type": "minecraft:stone_depth",
 				"surface_type": "ceiling"
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": true,
+				"secondary_depth_range": 6,
 				"offset": 0
 			},
 			"then_run": {
@@ -2327,7 +2404,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 							"type": "minecraft:stone_depth",
 							"surface_type": "floor"
 							"add_surface_depth": true,
-							"add_surface_secondary_depth": true,
+							"secondary_depth_range": 6,
 							"offset": 0
 						},
 						"then_run": {
@@ -2343,7 +2420,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 							"type": "minecraft:stone_depth",
 							"surface_type": "ceiling"
 							"add_surface_depth": true,
-							"add_surface_secondary_depth": true,
+							"secondary_depth_range": 6,
 							"offset": 0
 						},
 						"then_run": {
@@ -2411,7 +2488,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 	]
 }
 ```
-> ^ You can also have noises referenced which are used in other parts of terrain generation. Here, I want there to be air far away from cheese caves to create even more "caves". So I define a noise threshold that's limited to be far away from cheese caves, though it can still be intersected by spaghetti caves, noodle caves, ore veins, cave carvers, structures, etc. I have these "caves" marked by sponge borders. *(I will be the first to admit that this is very poorly done; the "caves" are icky nearly-uniform columns from just under the surface of the world down tonearly  bedrock; this is more of a proof of concept. As said in the introduction, Ganar has made custom noise caves that look gorgeous, so actually good caves are still in the realm of possibility.)
+> ^ You can also have noises referenced which are used in other parts of terrain generation. Here, I want there to be air far away from cheese caves to create even more "caves". So I define a noise threshold that's limited to be far away from cheese caves, though it can still be intersected by spaghetti caves, noodle caves, ore veins, cave carvers, structures, etc. I have these "caves" marked by sponge borders. *(I will be the first to admit that this is very poorly done; the "caves" are icky nearly-uniform columns from just under the surface of the world down tonearly  bedrock; this is more of a proof of concept. As said in the introduction, Ganar has made custom noise caves that look gorgeous, so actually good caves are still in the realm of possibility. And now, with density functions, there are much more efficient ways to make your own caves.)*
 
   </details>
 
@@ -2430,7 +2507,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 ## **Condition — temperature**
 
 <details>
-  <summary>Limits surface rules to some parts of the frozen ocean and deep frozen ocean biomes, and to all of other frozen biomes.</summary>
+  <summary>Limits surface rules to some parts of the frozen ocean and deep frozen ocean biomes, and to the entirety of other frozen biomes.</summary>
   <br>
 
 To my understanding, this condition checks the block's temperature value (the actual temperature value determining rain vs. snowfall, not the noise temperature value used in biome placement), and if it is at a value such that it snows regardless of y-level (specifically, it the temperature is less than 0.15), the condition succeeds.
@@ -2481,7 +2558,7 @@ Because this condition has no configurable fields, the only application outside 
 					"type": "minecraft:stone_depth",
 					"surface_type": "floor",
 					"add_surface_depth": false,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"offset": 0
 				},
 				"then_run": {
@@ -2610,7 +2687,7 @@ I don't quite know how gradient is calculated, but I would say that the game's d
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": false,
-			"add_surface_secondary_depth": false,
+			"secondary_depth_range": 0,
 			"offset": 0
 		},
 		"then_run": {
@@ -2741,7 +2818,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": false,
-			"add_surface_secondary_depth": false,
+			"secondary_depth_range": 0,
 			"offset": 0
 		},
 		"then_run": {
@@ -2850,7 +2927,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 				"if_true": {
 					"type": "minecraft:stone_depth",
 					"add_surface_depth": true,
-					"add_surface_secondary_depth": false,
+					"secondary_depth_range": 0,
 					"surface_type": "floor",
 					"offset": 1
 				},
@@ -2867,7 +2944,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"if_true": {
 				"type": "minecraft:stone_depth",
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"surface_type": "floor",
 				"offset": 0
 			},
@@ -2915,7 +2992,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"if_true": {
 				"type": "minecraft:stone_depth",
 				"add_surface_depth": false,
-				"add_surface_secondary_depth": false,
+				"secondary_depth_range": 0,
 				"surface_type": "floor",
 				"offset": 0
 			},
@@ -2995,7 +3072,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": false,
-			"add_surface_secondary_depth": false,
+			"secondary_depth_range": 0,
 			"offset": 0
 		},
 		"then_run": {
@@ -3032,7 +3109,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"type": "minecraft:stone_depth",
 			"surface_type": "floor",
 			"add_surface_depth": true,
-			"add_surface_secondary_depth": true,
+			"secondary_depth_range": 6,
 			"offset": 0
 		}
 	},
@@ -3044,7 +3121,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 				"type": "minecraft:stone_depth",
 				"surface_type": "ceiling",
 				"add_surface_depth": true,
-				"add_surface_secondary_depth": true,
+				"secondary_depth_range": 6,
 				"offset": 0
 			}
 		},
@@ -3071,7 +3148,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 		"type": "minecraft:stone_depth",
 		"surface_type": "floor",
 		"add_surface_depth": false,
-		"add_surface_secondary_depth": false,
+		"secondary_depth_range": 0,
 		"offset": 0
 	},
 	"then_run": {
