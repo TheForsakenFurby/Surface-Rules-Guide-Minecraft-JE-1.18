@@ -1,11 +1,11 @@
 # **A Guide to Surface Rules**
-### **(Minecraft Java Edition 1.18)**
+### **(Minecraft Java Edition 1.18.2)**
 
 *(Disclaimer: I am not an expert with surface rules. It’s very possible some things here are wrong. If anyone has corrections/suggestions feel free to reach out. In particular, I did not go to the effort to manually test every example, so if you decide to try one out and it doesn't validate or generate correctly, please let me know.)*
 
 ## **What are surface rules?**
 
-Under 1.18 world generation, surface builders no longer exist, and their role has been replaced with surface rules. Surface rules exist within the noise_settings file, and as such apply dimension-wide. What surface rules do is take a block of stone (or whatever your `default_block` within the same file is set to; the rest of this guide is written as if stone is the `default_block`) and replace it with a different block depending on what the rules say. In vanilla Minecraft, surface rules are responsible for such things as: placing grass at the surface of the world, placing sand at the surface of desert biomes, creating the different colored bands of terracotta within badlands biomes, creating the deepslate layer, making the bedrock floor, making sure grass blocks don't appear underwater, and more. There is a lot of utility to them.
+Under 1.18+ world generation, surface builders no longer exist, and their role has been replaced with surface rules. Surface rules exist within the noise_settings file, and as such apply dimension-wide. What surface rules do is take a block of stone (or whatever your `default_block` within the same file is set to; the rest of this guide is written as if stone is the `default_block`) and replace it with a different block depending on what the rules say. In vanilla Minecraft, surface rules are responsible for such things as: placing grass at the surface of the world, placing sand at the surface of desert biomes, creating the different colored bands of terracotta within badlands biomes, creating the deepslate layer, making the bedrock floor, making sure grass blocks don't appear underwater, and more. There is a lot of utility to them.
 
 Individually, surface rules (sometimes) aren't *too* complicated, with some even being quite simple, but when used together they can be extremely powerful tools. As an example, Ganar uses surface rules to create custom noise caves and ore veins (like the long veins of copper and iron introduced in 1.18)— currently this is the only way known to do this without modding.
 
@@ -999,11 +999,11 @@ This condition basically checks how deep the water is at a certain place, and su
 where `<integer value>` is an integer,
 and `<true or false>` is either `true` or `false`.
 
-`offset` refers to the maximum water depth to check for. For example, `"offset": -4` succeeds if water is less than 4 blocks deep. `offset` should almost always be a negative value. 0 and positive values are allowed, but they still will only place blocks underneath the water, and will be functionally identical to a value of -1 (unless `surface_depth_multiplier` is set to a negative enough value to counteract it).
+`offset` refers to the maximum water depth to check for. For example, `"offset": -4` succeeds if water is 4 blocks deep or less. `offset` should almost always be 0 or a negative value. Positive values are allowed, but they still will only place blocks underneath the water, and will be functionally identical to a value of 0 (unless `surface_depth_multiplier` is set to a negative enough value to counteract it).
 
 `surface_depth_multiplier` works exactly the same as in the `y_above` condition— it creates variation based on surface noise. Here, positive values are added to `offset`, decreasing its absolute value and thus the maximum depth, allowing the block to generate in shallower water. Negative values are subtracted from `offset`, increasing its absolute value and maximum depth, allowing the block to generate in deeper water. As with `y_above`, positive and negative integers of the same absolute value will cause equal amounts of variation, just one shifts upwards and one downwards. A value of zero leads to no variation at all.
 
-Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the nearest surface and checks for the maximum water depth there. You'll usually want this set to `true`; when it's set to `false` the game will still check for water at the nearest surface, but it won't take into consideration whether the block in question itself is actually submerged or not. So, when `add_stone_depth` is set to `false`, you can run into situations where you have shallow water, a few blocks of the block to place in shallow water/on dry land underneath that, and *then* blocks to be placed in deep water all the way until you reach another surface… A lot of the time, the `water` condition is used in combination with several other surface rules, such that this field doesn't actually matter (which I think is why it's so often set to `false` in vanilla world generation), and there are some use cases where someone would actively want this set to `false`, though I myself can't think of any. If you don't know whether to set this to `true` or `false`, I would recommend setting it to `true`.
+Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the nearest surface and checks for the maximum water depth there. You'll usually want this set to `true`; when it's set to `false` the game will still check for water at the nearest surface, but it won't take into consideration whether the block in question itself is actually submerged or not. So, when `add_stone_depth` is set to `false`, you can run into situations where you have shallow water, a few blocks of the block to place in shallow water/on dry land underneath that, and *then* blocks to be placed in deep water all the way until you reach another surface… A lot of the time, the `water` condition is used in combination with several other surface rules, such that this field doesn't actually matter (which I think is why it's so often set to `false` in vanilla world generation; or maybe setting it to `false` reduces lag), and there are some use cases where someone would actively want this set to `false`, though I myself can't think of any. If you don't know whether to set this to `true` or `false`, I would recommend setting it to `true`.
 
 (For those interested, the exact calculation used by this condition is `y + (addStoneDepth ? stoneDepthAbove : 0) >= waterHeight + offset + surfaceDepth * surfaceDepthMultiplier`, and it succeeds when there is *not* a fluid. Thank you to jacobsjo for providing this and for explaining this entire surface rule to me.)
 
@@ -1020,7 +1020,7 @@ Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the n
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": false
 			},
@@ -1043,7 +1043,7 @@ Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the n
 	]
 }
 ```
-> ^ This is a very important part of the sequence for vanilla terrain generation. What we're doing here is checking if the water is less than one block deep above the block we're looking at. Remember that the `water` condition is met if there is **not** water above the surface, so we place grass on success. Then, we place dirt elsewhere (wherever there is water directly above). We want no variation (no dirt on land and no grass under water), so `surface_depth_multiplier` is set to `false`. *(I have `add_stone_depth` set to `false` because that's how it's set in vanilla— since vanilla uses this surface rule in combination with others, `add_stone_depth` doesn't actually change anything. If you make a dimension with JUST this surface rule, changing `add_stone_depth` will have an effect, but making a dimension with just this surface rule is a bad idea anyways and could be laggy as all the grass updates.)*
+> ^ This is a very important part of the sequence for vanilla terrain generation. What we're doing here is checking if the water is 0 blocks deep or less above the block we're looking at. Remember that the `water` condition is met if there is **not** water above the surface, so we place grass on success. Then, we place dirt elsewhere (wherever there is water directly above). We want no variation (no dirt on land and no grass under water), so `surface_depth_multiplier` is set to `0`. *(I have `add_stone_depth` set to `false` because that's how it's set in vanilla— since vanilla uses this surface rule in combination with others, `add_stone_depth` doesn't actually change anything. If you make a dimension with JUST this surface rule, changing `add_stone_depth` will have an effect, but making a dimension with just this surface rule is a bad idea anyways and could be laggy as all the grass updates.)*
 
   </details>
 
@@ -1058,7 +1058,7 @@ Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the n
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": true
 			},
@@ -1093,7 +1093,7 @@ Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the n
 	]
 }
 ```
-> ^ Here, I want sandstone on dry land, stone in shallow water and prismarine in deep water, so I run multiple water conditions in sequence. The first checks that water is less than one block deep and places sandstone on success; I want no variation here, so I have `surface_depth_multiplier` set to `0`. The second checks that water is less than 10 blocks deep, with some variation, and places stone there. Because I do want variation here, I have `surface_depth_multiplier` set to a non-zero value. I'd rather have the maximum water depth be shallower than 10 blocks rather than deeper, so I chose a positive number for `surface_depth_multiplier` rather than a negative one. Finally, I place prismarine everywhere else (which is by this point just in deep water). I don't want to have prismarine underneath stone in shallow water, so I set `add_stone_depth` to `true`.
+> ^ Here, I want sandstone on dry land, stone in shallow water and prismarine in deep water, so I run multiple water conditions in sequence. The first checks that water is less than one block deep and places sandstone on success; I want no variation here, so I have `surface_depth_multiplier` set to `0`. The second checks that water is 10 blocks deep or less, with some variation, and places stone there. Because I do want variation here, I have `surface_depth_multiplier` set to a non-zero value. I'd rather have the maximum water depth be shallower than 10 blocks rather than deeper, so I chose a positive number for `surface_depth_multiplier` rather than a negative one. Finally, I place prismarine everywhere else (which is by this point just in deep water). I don't want to have prismarine underneath stone in shallow water, so I set `add_stone_depth` to `true`.
 
   </details>
 
@@ -1121,7 +1121,7 @@ Also like in `y_above`, `add_stone_depth`, when set to `true`, moves up to the n
 						"type": "minecraft:condition",
 						"if_true": {
 							"type": "minecraft:water",
-							"offset": -1,
+							"offset": 0,
 							"surface_depth_multiplier": 0,
 							"add_stone_depth": true
 						},
@@ -1417,7 +1417,7 @@ Normally, `stone_depth` only replaces the uppermost or lowermost block within th
 						"type": "minecraft:condition",
 						"if_true": {
 							"type": "minecraft:water",
-							"offset": -1,
+							"offset": 0,
 							"surface_depth_multiplier": 0,
 							"add_stone_depth": "false"
 						},
@@ -1714,7 +1714,7 @@ This condition affects columns where the surface noise (the one used for `add_su
 				"type": "minecraft:condition",
 				"if_true": {
 					"type": "minecraft:water",
-					"offset": -1,
+					"offset": 0,
 					"surface_depth_multiplier": 0,
 					"add_stone_depth": false
 				},
@@ -2080,7 +2080,7 @@ This condition allows blocks to be replaced near-ish to the surface. It's useful
 							"type": "minecraft:condition",
 							"if_true": {
 								"type": "minecraft:water",
-								"offset": -1,
+								"offset": 0,
 								"surface_depth_multiplier": 0,
 								"add_stone_depth": "false"
 							},
@@ -2208,7 +2208,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": false
 			},
@@ -2488,7 +2488,7 @@ and `<decimal value>` is a positive or negative number (or zero) with a decimal 
 	]
 }
 ```
-> ^ You can also have noises referenced which are used in other parts of terrain generation. Here, I want there to be air far away from cheese caves to create even more "caves". So I define a noise threshold that's limited to be far away from cheese caves, though it can still be intersected by spaghetti caves, noodle caves, ore veins, cave carvers, structures, etc. I have these "caves" marked by sponge borders. *(I will be the first to admit that this is very poorly done; the "caves" are icky nearly-uniform columns from just under the surface of the world down tonearly  bedrock; this is more of a proof of concept. As said in the introduction, Ganar has made custom noise caves that look gorgeous, so actually good caves are still in the realm of possibility. And now, with density functions, there are much more efficient ways to make your own caves.)*
+> ^ You can also have noises referenced which are used in other parts of terrain generation. Here, I want there to be air far away from cheese caves to create even more "caves". So I define a noise threshold that's limited to be far away from cheese caves, though it can still be intersected by spaghetti caves, noodle caves, ore veins, cave carvers, structures, etc. I have these "caves" marked by sponge borders. *(I will be the first to admit that this example is very poorly done; the "caves" are icky nearly-uniform columns from just under the surface of the world down tonearly  bedrock; this is more of a proof of concept. As said in the introduction, Ganar has made custom noise caves that look gorgeous, so actually good caves are still in the realm of possibility. And now, with density functions, there are much, much more efficient ways to make your own caves.)*
 
   </details>
 
@@ -2548,7 +2548,7 @@ Because this condition has no configurable fields, the only application outside 
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": true
 			},
@@ -2694,7 +2694,7 @@ I don't quite know how gradient is calculated, but I would say that the game's d
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": false
 			},
@@ -2825,7 +2825,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 			"type": "minecraft:condition",
 			"if_true": {
 				"type": "minecraft:water",
-				"offset": -1,
+				"offset": 0,
 				"surface_depth_multiplier": 0,
 				"add_stone_depth": false
 			},
@@ -2917,7 +2917,7 @@ where `<condition>` is another surface rule condition (including all of its fiel
 				"type": "minecraft:not",
 				"invert": {
 					"type": "minecraft:water",
-					"offset": -1,
+					"offset": 0,
 					"surface_depth_multiplier": 0,
 					"add_stone_depth": true
 				}
