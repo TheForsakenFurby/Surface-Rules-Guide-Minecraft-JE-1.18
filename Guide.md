@@ -2657,9 +2657,13 @@ Because this condition has no configurable fields, the only application outside 
   <summary>Limits surface rules to steep faces on the north and east sides of mountains.</summary>
   <br>
 
-The `steep` condition succeeds at any position where there's a vertical gradient greater than 2 on its north and/or east face. Also, at a chunk boundary, the gradient needs to be greater than 4. (Thank you jacobsjo for this explanation; as with the calculation for `above_preliminary_surface` this explanation may be outdated, but if that's the case it should still be pretty close.)
+The `steep` condition succeeds at any position where there's a vertical gradient greater than 2 on its north and/or east face. Also, at a chunk boundary, the gradient needs to be greater than 4. (Thank you jacobsjo for this explanation.)
 
-I don't quite know how gradient is calculated, but I would say that the game's definition of what is "steep" is pretty good. The steepness is calculated at the world's surface (**NOT** a cave surface— this always uses the uppermost block and excludes noise caves), and unless limited by other conditions, will carry on throughout the entire column. This condition used by vanilla in frozen peaks, jagged peaks, and snowy slopes, to place packed ice (frozen peaks) and stone (jagged peaks and snowy slopes).
+The steepness is calculated at the world's surface (**NOT** a cave surface— this always uses the uppermost block and excludes noise caves), and unless limited by other conditions, will carry on throughout the entire column. This condition used by vanilla in frozen peaks, jagged peaks, and snowy slopes, to place packed ice (frozen peaks) and stone (jagged peaks and snowy slopes).
+
+For blocks not on a chunk border, the exact calculation is as follows (thank you Apollo for figuring this out): The heightmap gets sampled 1 block south and 1 block north of the block being checked by the surface rule. If the block to the south is 4 or more blocks higher than the block to the north, the condition succeeds. If this check does not pass, the same process happens with the blocks immediately east and west— with west needing to be 4 or more blocks higher than east— and if this check passes, then the condition still succeeds. If both checks do not pass, the condition fails. (At chunk borders, the game will instead sample the original block itself in the place of any blocks that would be outside the chunk.)
+
+**Remember that this condition only works on two sides of mountains, not all four of them.**
 
   <h3>Formatting:</h3>
 
