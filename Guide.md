@@ -463,7 +463,7 @@ You can have any number of surface rules within a sequence, but remember to incl
 
 
 
-#### *The rest of this document will be used to explain the various conditions that can be referenced in the `is_true` field of `condition` surface rules.*
+#### *The rest of this document will be used to explain the various conditions that can be referenced in the `if_true` field of `condition` surface rules.*
 
 ***
 
